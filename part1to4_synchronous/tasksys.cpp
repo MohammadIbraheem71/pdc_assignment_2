@@ -1,5 +1,5 @@
 #include "tasksys.h"
-
+#include <algorithm>
 
 IRunnable::~IRunnable() {}
 
@@ -55,6 +55,8 @@ TaskSystemParallelSpawn::TaskSystemParallelSpawn(int num_threads): ITaskSystem(n
     // Implementations are free to add new class member variables
     // (requiring changes to tasksys.h).
     //
+    //
+    num_threads_ = num_threads; // we just assign a value to the private num_threads_ variable
 }
 
 TaskSystemParallelSpawn::~TaskSystemParallelSpawn() {}
@@ -68,8 +70,38 @@ void TaskSystemParallelSpawn::run(IRunnable* runnable, int num_total_tasks) {
     // tasks sequentially on the calling thread.
     //
 
-    for (int i = 0; i < num_total_tasks; i++) {
-        runnable->runTask(i, num_total_tasks);
+    // if we have no tasks then we just return
+    if (num_total_tasks <= 0){
+        return;
+    }
+
+    // only create as many threads as there r tasks, or num_threads
+    int workers = std::min(num_threads_, num_total_tasks);
+
+    // shared schedular state, holds the index of the next unclaimed task
+    std::atomic<int> next_task(0);
+
+    // lambda function
+    auto worker_fn = [&](){
+        while(true){
+            int id = next_task.fetch_add(1);
+            if (id >= num_total_tasks){
+                break;
+            }
+            runnable->runTask(id, num_total_tasks);
+        }
+    };
+
+    // we create a vector of threads
+    std::vector<std::thread> threads;
+    threads.reserve(workers);
+    for (int i = 0; i < workers; i++){
+        threads.emplace_back(worker_fn);
+    }
+
+    // wait for all threads to join back
+    for (auto& t : threads){
+        t.join();
     }
 }
 
