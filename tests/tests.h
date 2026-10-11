@@ -7,8 +7,8 @@
 #include <atomic>
 #include <set>
 
-#include "CycleTimer.h"
-#include "itasksys.h"
+#include "../common/CycleTimer.h"
+#include "../part1to4_synchronous/itasksys.h"
 
 /*
 Sync tests
@@ -60,11 +60,16 @@ typedef struct {
 /*
  * Implement your task here
 */
+
+// modified this fucntion
 class YourTask : public IRunnable {
     public:
-        YourTask() {}
+        std::atomic<int>* counts_;
+        YourTask(std::atomic<int>* counts) : counts_(counts) {}
         ~YourTask() {}
-        void runTask(int task_id, int num_total_tasks) {}
+        void runTask(int task_id, int num_total_tasks) {
+            counts_[task_id].fetch_add(1);
+        }
 };
 /*
  * Implement your test here. Call this function from a wrapper that passes in
@@ -72,45 +77,78 @@ class YourTask : public IRunnable {
  * `simpleTestAsync` as an example.
  */
 TestResults yourTest(ITaskSystem* t, bool do_async, int num_elements, int num_bulk_task_launches) {
-    // TODO: initialize your input and output buffers
-    int* output = new int[num_elements];
+    // One counter per task ID. Each launch should increment every counter once.
+    std::atomic<int>* output = new std::atomic<int>[num_elements];
+    for (int i = 0; i < num_elements; i++) output[i].store(0);
 
-    // TODO: instantiate your bulk task launches
+    std::vector<YourTask*> tasks(num_bulk_task_launches);
+    for (int i = 0; i < num_bulk_task_launches; i++) {
+        tasks[i] = new YourTask(output);
+    }
 
     // Run the test
     double start_time = CycleTimer::currentSeconds();
     if (do_async) {
-        // TODO:
-        // initialize dependency vector
-        // make calls to t->runAsyncWithDeps and push TaskID to dependency vector
-        // t->sync() at end
+        TaskID prev_task_id = 0;
+        for (int i = 0; i < num_bulk_task_launches; i++) {
+            std::vector<TaskID> deps;
+            if (i > 0) deps.push_back(prev_task_id);
+            prev_task_id = t->runAsyncWithDeps(tasks[i], num_elements, deps);
+        }
+        t->sync();
     } else {
-        // TODO: make calls to t->run
+        for (int i = 0; i < num_bulk_task_launches; i++) {
+            t->run(tasks[i], num_elements);
+        }
     }
     double end_time = CycleTimer::currentSeconds();
 
-    // Correctness validation
+    // Correctness validation: each task ID must have run exactly once per launch
     TestResults results;
     results.passed = true;
 
-    for (int i=0; i<num_elements; i++) {
-        int value = 0; // TODO: initialize value
-        for (int j=0; j<num_bulk_task_launches; j++) {
-            // TODO: update value as expected
-        }
-
-        int expected = value;
-        if (output[i] != expected) {
+    for (int i = 0; i < num_elements; i++) {
+        int expected = num_bulk_task_launches;
+        int actual = output[i].load();
+        if (actual != expected) {
             results.passed = false;
-            printf("%d: %d expected=%d\n", i, output[i], expected);
+            printf("%d: %d expected=%d\n", i, actual, expected);
             break;
         }
     }
     results.time = end_time - start_time;
 
+    for (int i = 0; i < num_bulk_task_launches; i++) delete tasks[i];
     delete [] output;
 
     return results;
+}
+
+TestResults yourTestSync(ITaskSystem* t) {
+    // Fewer tasks than workers, counts not divisible by worker counts, and a large count
+    const int sizes[] = {1, 3, 7, 13, 1001, 20000};
+    TestResults total;
+    total.passed = true;
+    total.time = 0.0;
+    for (int n : sizes) {
+        TestResults r = yourTest(t, false, n, 50);
+        total.passed = total.passed && r.passed;
+        total.time += r.time;
+    }
+    return total;
+}
+
+TestResults yourTestAsync(ITaskSystem* t) {
+    const int sizes[] = {1, 3, 7, 13, 1001, 20000};
+    TestResults total;
+    total.passed = true;
+    total.time = 0.0;
+    for (int n : sizes) {
+        TestResults r = yourTest(t, true, n, 50);
+        total.passed = total.passed && r.passed;
+        total.time += r.time;
+    }
+    return total;
 }
 
 /*
@@ -251,7 +289,7 @@ class MathOperationsInTightForLoopTask: public IRunnable {
         int array_size_;
         MathOperationsInTightForLoopTask(int array_size, float* output) {
             array_size_ = array_size;
-            output_ = output; 
+            output_ = output;
         }
         ~MathOperationsInTightForLoopTask() {}
 
@@ -311,7 +349,7 @@ class ReduceTask: public IRunnable {
 };
 
 /*
- * Each task computes a number of rows of the output Mandelbrot image.  
+ * Each task computes a number of rows of the output Mandelbrot image.
  * These rows either form a contiguous chunk of the image (if
  * interleave is false) or are interleaved throughout the image.
  */
@@ -329,7 +367,7 @@ class MandelbrotTask: public IRunnable {
         MandelArgs *args_;
 		int interleave_;
 
-        MandelbrotTask(MandelArgs *args, int interleave) 
+        MandelbrotTask(MandelArgs *args, int interleave)
           : args_(args), interleave_(interleave) {}
         ~MandelbrotTask() {}
 
@@ -396,7 +434,7 @@ class MandelbrotTask: public IRunnable {
                 }
             }
         }
-    
+
         void runTask(int task_id, int num_total_tasks) {
             int rowsPerTask = args_->height / num_total_tasks;
 
@@ -488,7 +526,7 @@ class StrictDependencyTask: public IRunnable {
         ~StrictDependencyTask() {}
 };
 
-/* 
+/*
  * ==================================================================
  *   Begin test definitions
  * ==================================================================
@@ -588,7 +626,7 @@ TestResults pingPongTest(ITaskSystem* t, bool equal_work, bool do_async,
                          int num_elements, int base_iters) {
 
     int num_tasks = 64;
-    int num_bulk_task_launches = 400;   
+    int num_bulk_task_launches = 400;
 
     int* input = new int[num_elements];
     int* output = new int[num_elements];
@@ -638,7 +676,7 @@ TestResults pingPongTest(ITaskSystem* t, bool equal_work, bool do_async,
     results.passed = true;
 
     // Number of ping-pongs determines which buffer to look at for the results
-    int* buffer = (num_bulk_task_launches % 2 == 1) ? output : input; 
+    int* buffer = (num_bulk_task_launches % 2 == 1) ? output : input;
 
     for (int i=0; i<num_elements; i++) {
         int value = i;
@@ -661,7 +699,7 @@ TestResults pingPongTest(ITaskSystem* t, bool equal_work, bool do_async,
     delete [] output;
     for (int i=0; i<num_bulk_task_launches; i++)
         delete runnables[i];
-    
+
     return results;
 }
 
@@ -748,7 +786,7 @@ TestResults recursiveFibonacciTestBase(ITaskSystem* t, bool do_async) {
     }
     double end_time = CycleTimer::currentSeconds();
 
-    // Validate correctness 
+    // Validate correctness
     TestResults result;
     result.passed = true;
     for (int i = 0; i < num_tasks; i++) {
@@ -1180,7 +1218,7 @@ TestResults spinBetweenRunCallsAsyncTest(ITaskSystem *t) {
 TestResults mandelbrotChunkedTestBase(ITaskSystem* t, bool do_async) {
 
     int num_tasks = 128;
-    
+
     MandelbrotTask::MandelArgs ma;
     ma.x0 = -2;
     ma.x1 = 1;
@@ -1223,7 +1261,7 @@ TestResults mandelbrotChunkedTestBase(ITaskSystem* t, bool do_async) {
             result.passed = false;
         }
     }
-    
+
     result.time = end_time - start_time;
 
     delete [] golden;
@@ -1255,7 +1293,7 @@ TestResults simpleRunDepsTest(ITaskSystem *t) {
     std::vector<TaskID> b_deps;
     std::vector<TaskID> c_deps;
 
-    
+
     double start_time = CycleTimer::currentSeconds();
     auto a_taskid = t->runAsyncWithDeps(a, 10, a_deps);
 
@@ -1319,7 +1357,7 @@ TestResults strictDiamondDepsTest(ITaskSystem *t) {
 
     t->sync();
     double end_time = CycleTimer::currentSeconds();
-    
+
     TestResults result;
     result.passed = done[3];
     result.time = end_time - start_time;
@@ -1385,7 +1423,7 @@ TestResults strictGraphDepsTestBase(ITaskSystem*t, int n, int m, unsigned int se
     }
     t->sync();
     double end_time = CycleTimer::currentSeconds();
-    
+
     TestResults result;
     result.passed = done[n-1];
     result.time = end_time - start_time;

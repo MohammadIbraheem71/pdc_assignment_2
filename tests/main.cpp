@@ -4,7 +4,7 @@
 #include <string>
 #include <assert.h>
 
-#include "tasksys.h"
+#include "../part1to4_synchronous/tasksys.h"
 #include "tests.h"
 
 #define DEFAULT_NUM_THREADS 8
@@ -83,6 +83,8 @@ int main(int argc, char** argv)
         strictGraphDepsSmall,
         strictGraphDepsMedium,
         strictGraphDepsLarge,
+        yourTestSync,
+        yourTestAsync,
     };
 
     std::string test_names[n_tests] = {
@@ -115,8 +117,10 @@ int main(int argc, char** argv)
         "strict_graph_deps_small_async",
         "strict_graph_deps_med_async",
         "strict_graph_deps_large_async",
+        "your_test_sync",
+        "your_test_async",
     };
- 
+
     // Parse commandline options
     int opt;
     static struct option long_options[] = {
