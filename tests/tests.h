@@ -1441,3 +1441,84 @@ TestResults strictGraphDepsMedium(ITaskSystem* t) {
 TestResults strictGraphDepsLarge(ITaskSystem* t) {
     return strictGraphDepsTestBase(t,1000,20000,0);
 }
+
+
+/*
+ * Part 4: irregular workload with a chunk size. Items in the first half cost
+ * 1 unit, items in the second half cost 10 units. One task processes `chunk`
+ * consecutive items.
+ */
+class IrregularChunkTask : public IRunnable {
+    public:
+        int num_items_;
+        int chunk_;
+        unsigned long long* out_;
+
+        IrregularChunkTask(int num_items, int chunk, unsigned long long* out)
+            : num_items_(num_items), chunk_(chunk), out_(out) {}
+        ~IrregularChunkTask() {}
+
+        static inline int itemUnits(int i, int num_items) {
+            return (i < num_items / 2) ? 1 : 10;
+        }
+
+        // One unit = 100 iterations of a dependent multiply-add chain.
+        static inline unsigned long long itemWork(int i, int units) {
+            unsigned long long acc = (unsigned long long)i + 1;
+            int iters = units * 100;
+            for (int k = 0; k < iters; k++)
+                acc = acc * 6364136223846793005ULL + 1442695040888963407ULL;
+            return acc;
+        }
+
+        void runTask(int task_id, int num_total_tasks) {
+            int start = task_id * chunk_;
+            int end = std::min(start + chunk_, num_items_);
+            for (int i = start; i < end; i++)
+                out_[i] = itemWork(i, itemUnits(i, num_items_));
+        }
+};
+
+TestResults irregularChunkTest(ITaskSystem* t, int chunk) {
+    const int num_items = 4096;
+    const int num_launches = 100;
+    int num_tasks = (num_items + chunk - 1) / chunk;
+
+    unsigned long long* out = new unsigned long long[num_items];
+    for (int i = 0; i < num_items; i++) out[i] = 0;
+
+    IrregularChunkTask task(num_items, chunk, out);
+
+    double start_time = CycleTimer::currentSeconds();
+    for (int r = 0; r < num_launches; r++) {
+        t->run(&task, num_tasks);
+    }
+    double end_time = CycleTimer::currentSeconds();
+
+    TestResults results;
+    results.passed = true;
+    for (int i = 0; i < num_items; i++) {
+        unsigned long long expected = IrregularChunkTask::itemWork(
+            i, IrregularChunkTask::itemUnits(i, num_items));
+        if (out[i] != expected) {
+            results.passed = false;
+            printf("%d: mismatch (chunk=%d)\n", i, chunk);
+            break;
+        }
+    }
+    results.time = end_time - start_time;
+
+    delete [] out;
+    return results;
+}
+
+#define IRREGULAR_CHUNK_TEST(CH) \
+    TestResults irregularChunk##CH(ITaskSystem* t) { return irregularChunkTest(t, CH); }
+
+IRREGULAR_CHUNK_TEST(1)
+IRREGULAR_CHUNK_TEST(8)
+IRREGULAR_CHUNK_TEST(64)
+IRREGULAR_CHUNK_TEST(256)
+IRREGULAR_CHUNK_TEST(512)
+IRREGULAR_CHUNK_TEST(1024)
+IRREGULAR_CHUNK_TEST(2048)

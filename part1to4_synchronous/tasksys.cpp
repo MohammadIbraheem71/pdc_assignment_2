@@ -218,35 +218,68 @@ const char* TaskSystemParallelThreadPoolSleeping::name() {
 }
 
 TaskSystemParallelThreadPoolSleeping::TaskSystemParallelThreadPoolSleeping(int num_threads): ITaskSystem(num_threads) {
-    //
-    // TODO: Student implementations may decide to perform setup
-    // operations (such as thread pool construction) here.
-    // Implementations are free to add new class member variables
-    // (requiring changes to tasksys.h).
-    //
+    num_threads_ = num_threads;
+    runnable_ = nullptr;
+    total_ = 0;
+    next_ = 0;
+    done_ = 0;
+    stop_ = false;
+
+    workers_.reserve(num_threads_);
+    for (int i = 0; i < num_threads_; i++) {
+        workers_.emplace_back(&TaskSystemParallelThreadPoolSleeping::workerLoop, this);
+    }
 }
 
 TaskSystemParallelThreadPoolSleeping::~TaskSystemParallelThreadPoolSleeping() {
-    //
-    // TODO: Student implementations may decide to perform cleanup
-    // operations (such as thread pool shutdown construction) here.
-    // Implementations are free to add new class member variables
-    // (requiring changes to tasksys.h).
-    //
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        stop_ = true;
+    }
+    cv_work_.notify_all();
+    for (auto& t : workers_) {
+        t.join();
+    }
+}
+
+void TaskSystemParallelThreadPoolSleeping::workerLoop() {
+    std::unique_lock<std::mutex> lk(mtx_);
+    while (true) {
+        // Sleep until there is an unclaimed task or the system is shutting down.
+        cv_work_.wait(lk, [this] { return stop_ || next_ < total_; });
+        if (stop_){
+            return;
+        }
+
+        int id = next_++;
+        IRunnable* r = runnable_;
+        int n = total_;
+
+        lk.unlock();                // run the task outside the lock
+        r->runTask(id, n);
+        lk.lock();
+
+        done_++;
+        if (done_ == total_) {
+            cv_done_.notify_one();  // wake the calling thread
+        }
+    }
 }
 
 void TaskSystemParallelThreadPoolSleeping::run(IRunnable* runnable, int num_total_tasks) {
-
-
-    //
-    // TODO: Students will modify the implementation of this
-    // method in Part 3.  The implementation provided below runs all
-    // tasks sequentially on the calling thread.
-    //
-
-    for (int i = 0; i < num_total_tasks; i++) {
-        runnable->runTask(i, num_total_tasks);
+    if (num_total_tasks <= 0){
+        return;
     }
+
+    std::unique_lock<std::mutex> lk(mtx_);
+    runnable_ = runnable;
+    total_ = num_total_tasks;
+    next_ = 0;
+    done_ = 0;
+    cv_work_.notify_all();          // new work: wake the workers
+
+    // Sleep until every task of this launch has finished.
+    cv_done_.wait(lk, [this] { return done_ == total_; });
 }
 
 TaskID TaskSystemParallelThreadPoolSleeping::runAsyncWithDeps(IRunnable* runnable, int num_total_tasks,

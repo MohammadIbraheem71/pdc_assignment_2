@@ -49,7 +49,7 @@ ITaskSystem *selectTaskSystemRefImpl(int num_threads, TaskSystemType type) {
 
 int main(int argc, char** argv)
 {
-    const int n_tests = 31;
+    const int n_tests = 38;
     int num_threads = DEFAULT_NUM_THREADS;
     int num_timing_iterations = DEFAULT_NUM_TIMING_ITERATIONS;
 
@@ -85,6 +85,13 @@ int main(int argc, char** argv)
         strictGraphDepsLarge,
         yourTestSync,
         yourTestAsync,
+        irregularChunk1,
+        irregularChunk8,
+        irregularChunk64,
+        irregularChunk256,
+        irregularChunk512,
+        irregularChunk1024,
+        irregularChunk2048,
     };
 
     std::string test_names[n_tests] = {
@@ -119,6 +126,13 @@ int main(int argc, char** argv)
         "strict_graph_deps_large_async",
         "your_test_sync",
         "your_test_async",
+        "irregular_chunk_1",
+        "irregular_chunk_8",
+        "irregular_chunk_64",
+        "irregular_chunk_256",
+        "irregular_chunk_512",
+        "irregular_chunk_1024",
+        "irregular_chunk_2048",
     };
 
     // Parse commandline options

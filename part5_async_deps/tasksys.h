@@ -2,6 +2,11 @@
 #define _TASKSYS_H
 
 #include "itasksys.h"
+#include <thread>
+#include <vector>
+#include <mutex>
+#include <condition_variable>
+#include <deque>
 
 /*
  * TaskSystemSerial: This class is the student's implementation of a

@@ -6,6 +6,7 @@
 #include <vector>
 #include <atomic>
 #include <mutex>
+#include <condition_variable>
 
 /*
  * TaskSystemSerial: This class is the student's implementation of a
@@ -79,6 +80,8 @@ class TaskSystemParallelThreadPoolSpinning: public ITaskSystem {
  * a thread pool. See definition of ITaskSystem in
  * itasksys.h for documentation of the ITaskSystem interface.
  */
+
+// this has been modified for part 3 of the assignment
 class TaskSystemParallelThreadPoolSleeping: public ITaskSystem {
     public:
         TaskSystemParallelThreadPoolSleeping(int num_threads);
@@ -88,6 +91,20 @@ class TaskSystemParallelThreadPoolSleeping: public ITaskSystem {
         TaskID runAsyncWithDeps(IRunnable* runnable, int num_total_tasks,
                                 const std::vector<TaskID>& deps);
         void sync();
+    private:
+        void workerLoop();
+
+        int num_threads_;
+        std::vector<std::thread> workers_;
+
+        std::mutex mtx_;                    // guards all fields below
+        std::condition_variable cv_work_;   // workers sleep here
+        std::condition_variable cv_done_;   // the calling thread sleeps here
+        IRunnable* runnable_;
+        int total_;                         // tasks in the current launch
+        int next_;                          // next unclaimed task ID
+        int done_;                          // tasks finished in the current launch
+        bool stop_;                         // set by the destructor
 };
 
 #endif
