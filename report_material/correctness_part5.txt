@@ -1,0 +1,224 @@
+===================================================================================
+Test name: simple_test_async
+===================================================================================
+[Serial]:		[0.002] ms
+[Parallel + Always Spawn]:		[0.000] ms
+[Parallel + Thread Pool + Spin]:		[0.000] ms
+[Parallel + Thread Pool + Sleep]:		[0.068] ms
+===================================================================================
+===================================================================================
+Test name: strict_diamond_deps_async
+===================================================================================
+[Serial]:		[1.353] ms
+[Parallel + Always Spawn]:		[1.348] ms
+[Parallel + Thread Pool + Spin]:		[1.329] ms
+[Parallel + Thread Pool + Sleep]:		[0.413] ms
+===================================================================================
+===================================================================================
+Test name: strict_graph_deps_small_async
+===================================================================================
+[Serial]:		[2.061] ms
+[Parallel + Always Spawn]:		[2.121] ms
+[Parallel + Thread Pool + Spin]:		[2.077] ms
+[Parallel + Thread Pool + Sleep]:		[0.395] ms
+===================================================================================
+===================================================================================
+Test name: strict_graph_deps_med_async
+===================================================================================
+[Serial]:		[49.729] ms
+[Parallel + Always Spawn]:		[53.331] ms
+[Parallel + Thread Pool + Spin]:		[52.958] ms
+[Parallel + Thread Pool + Sleep]:		[6.879] ms
+===================================================================================
+===================================================================================
+Test name: strict_graph_deps_large_async
+===================================================================================
+[Serial]:		[513.530] ms
+[Parallel + Always Spawn]:		[515.912] ms
+[Parallel + Thread Pool + Spin]:		[521.548] ms
+[Parallel + Thread Pool + Sleep]:		[62.930] ms
+===================================================================================
+===================================================================================
+Test name: your_dep_test
+===================================================================================
+[Serial]:		[246.044] ms
+[Parallel + Always Spawn]:		[247.362] ms
+[Parallel + Thread Pool + Spin]:		[247.770] ms
+[Parallel + Thread Pool + Sleep]:		[34.042] ms
+===================================================================================
+===================================================================================
+Test name: simple_run_deps_test
+===================================================================================
+Running SleepTask (1s), task 0
+Running SleepTask (1s), task 1
+Running SleepTask (1s), task 2
+Running SleepTask (1s), task 3
+Running SleepTask (1s), task 4
+Running SleepTask (1s), task 5
+Running SleepTask (1s), task 6
+Running SleepTask (1s), task 7
+Running SleepTask (1s), task 8
+Running SleepTask (1s), task 9
+Running SleepTask (5s), task 0
+Running SleepTask (5s), task 1
+Running SleepTask (5s), task 2
+Running SleepTask (5s), task 3
+Running SleepTask (5s), task 4
+Running SleepTask (5s), task 5
+Running SleepTask (10s), task 0
+Running SleepTask (10s), task 1
+Running SleepTask (10s), task 2
+Running SleepTask (10s), task 3
+Running SleepTask (10s), task 4
+Running SleepTask (10s), task 5
+Running SleepTask (10s), task 6
+Running SleepTask (10s), task 7
+Running SleepTask (10s), task 8
+Running SleepTask (10s), task 9
+Running SleepTask (10s), task 10
+Running SleepTask (10s), task 11
+[Serial]:		[160002.972] ms
+Running SleepTask (1s), task 0
+Running SleepTask (1s), task 1
+Running SleepTask (1s), task 2
+Running SleepTask (1s), task 3
+Running SleepTask (1s), task 4
+Running SleepTask (1s), task 5
+Running SleepTask (1s), task 6
+Running SleepTask (1s), task 7
+Running SleepTask (1s), task 8
+Running SleepTask (1s), task 9
+Running SleepTask (5s), task 0
+Running SleepTask (5s), task 1
+Running SleepTask (5s), task 2
+Running SleepTask (5s), task 3
+Running SleepTask (5s), task 4
+Running SleepTask (5s), task 5
+Running SleepTask (10s), task 0
+Running SleepTask (10s), task 1
+Running SleepTask (10s), task 2
+Running SleepTask (10s), task 3
+Running SleepTask (10s), task 4
+Running SleepTask (10s), task 5
+Running SleepTask (10s), task 6
+Running SleepTask (10s), task 7
+Running SleepTask (10s), task 8
+Running SleepTask (10s), task 9
+Running SleepTask (10s), task 10
+Running SleepTask (10s), task 11
+[Parallel + Always Spawn]:		[160003.173] ms
+Running SleepTask (1s), task 0
+Running SleepTask (1s), task 1
+Running SleepTask (1s), task 2
+Running SleepTask (1s), task 3
+Running SleepTask (1s), task 4
+Running SleepTask (1s), task 5
+Running SleepTask (1s), task 6
+Running SleepTask (1s), task 7
+Running SleepTask (1s), task 8
+Running SleepTask (1s), task 9
+Running SleepTask (5s), task 0
+Running SleepTask (5s), task 1
+Running SleepTask (5s), task 2
+Running SleepTask (5s), task 3
+Running SleepTask (5s), task 4
+Running SleepTask (5s), task 5
+Running SleepTask (10s), task 0
+Running SleepTask (10s), task 1
+Running SleepTask (10s), task 2
+Running SleepTask (10s), task 3
+Running SleepTask (10s), task 4
+Running SleepTask (10s), task 5
+Running SleepTask (10s), task 6
+Running SleepTask (10s), task 7
+Running SleepTask (10s), task 8
+Running SleepTask (10s), task 9
+Running SleepTask (10s), task 10
+Running SleepTask (10s), task 11
+[Parallel + Thread Pool + Spin]:		[160003.023] ms
+Running SleepTask (1s), task 0
+Running SleepTask (1s), task 1
+Running SleepTask (1s), task 3
+Running SleepTask (1s), task 2
+Running SleepTask (1s), task 6
+Running SleepTask (1s), task 4
+Running SleepTask (1s), task 7
+Running SleepTask (1s), task 5
+Running SleepTask (1s), task 8
+Running SleepTask (1s), task 9
+Running SleepTask (5s), task 0
+Running SleepTask (5s), task 1
+Running SleepTask (5s), task 2
+Running SleepTask (5s), task 3
+Running SleepTask (5s), task 4
+Running SleepTask (5s), task 5
+Running SleepTask (10s), task 2
+Running SleepTask (10s), task 3
+Running SleepTask (10s), task 4
+Running SleepTask (10s), task 0
+Running SleepTask (10s), task 1
+Running SleepTask (10s), task 5
+Running SleepTask (10s), task 6
+Running SleepTask (10s), task 7
+Running SleepTask (10s), task 11
+Running SleepTask (10s), task 10
+Running SleepTask (10s), task 9
+Running SleepTask (10s), task 8
+[Parallel + Thread Pool + Sleep]:		[27000.771] ms
+===================================================================================
+===================================================================================
+Test name: simple_test_sync
+===================================================================================
+[Serial]:		[0.000] ms
+[Parallel + Always Spawn]:		[0.000] ms
+[Parallel + Thread Pool + Spin]:		[0.000] ms
+[Parallel + Thread Pool + Sleep]:		[0.056] ms
+===================================================================================
+===================================================================================
+Test name: ping_pong_equal_async
+===================================================================================
+[Serial]:		[1785.268] ms
+[Parallel + Always Spawn]:		[1784.873] ms
+[Parallel + Thread Pool + Spin]:		[1799.156] ms
+[Parallel + Thread Pool + Sleep]:		[267.068] ms
+===================================================================================
+===================================================================================
+Test name: recursive_fibonacci_async
+===================================================================================
+[Serial]:		[1341.671] ms
+[Parallel + Always Spawn]:		[1434.029] ms
+[Parallel + Thread Pool + Spin]:		[1435.057] ms
+[Parallel + Thread Pool + Sleep]:		[226.223] ms
+===================================================================================
+===================================================================================
+Test name: math_operations_in_tight_for_loop_fan_in_async
+===================================================================================
+[Serial]:		[550.910] ms
+[Parallel + Always Spawn]:		[554.769] ms
+[Parallel + Thread Pool + Spin]:		[565.683] ms
+[Parallel + Thread Pool + Sleep]:		[88.408] ms
+===================================================================================
+===================================================================================
+Test name: math_operations_in_tight_for_loop_reduction_tree_async
+===================================================================================
+[Serial]:		[555.407] ms
+[Parallel + Always Spawn]:		[566.623] ms
+[Parallel + Thread Pool + Spin]:		[552.923] ms
+[Parallel + Thread Pool + Sleep]:		[84.850] ms
+===================================================================================
+===================================================================================
+Test name: spin_between_run_calls_async
+===================================================================================
+[Serial]:		[510.063] ms
+[Parallel + Always Spawn]:		[499.946] ms
+[Parallel + Thread Pool + Spin]:		[498.164] ms
+[Parallel + Thread Pool + Sleep]:		[304.805] ms
+===================================================================================
+===================================================================================
+Test name: mandelbrot_chunked_async
+===================================================================================
+[Serial]:		[613.506] ms
+[Parallel + Always Spawn]:		[631.628] ms
+[Parallel + Thread Pool + Spin]:		[611.620] ms
+[Parallel + Thread Pool + Sleep]:		[93.426] ms
+===================================================================================

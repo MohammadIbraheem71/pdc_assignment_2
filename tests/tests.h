@@ -1522,3 +1522,96 @@ IRREGULAR_CHUNK_TEST(256)
 IRREGULAR_CHUNK_TEST(512)
 IRREGULAR_CHUNK_TEST(1024)
 IRREGULAR_CHUNK_TEST(2048)
+
+/*
+    * Checks that no task of a launch starts before all tasks of every dependency
+    * have finished. Each task sleeps for cost_us to model real work.
+    */
+class DepCheckTask : public IRunnable {
+    public:
+        std::atomic<int>* finished_;
+        std::vector<std::atomic<int>*> dep_finished_;
+        std::vector<int> dep_total_;
+        std::atomic<bool>* violation_;
+        int cost_us_;
+
+        DepCheckTask(std::atomic<int>* finished,
+                        const std::vector<std::atomic<int>*>& dep_finished,
+                        const std::vector<int>& dep_total,
+                        std::atomic<bool>* violation, int cost_us)
+            : finished_(finished), dep_finished_(dep_finished), dep_total_(dep_total),
+                violation_(violation), cost_us_(cost_us) {}
+        ~DepCheckTask() {}
+
+        void runTask(int task_id, int num_total_tasks) {
+            for (size_t i = 0; i < dep_finished_.size(); i++) {
+                if (dep_finished_[i]->load() != dep_total_[i]) violation_->store(true);
+            }
+            std::this_thread::sleep_for(std::chrono::microseconds(cost_us_));
+            finished_->fetch_add(1);
+        }
+};
+
+/* The assignment's graph: A(128, 1 ms) -> B(2, 8 ms), C(6, 4 ms) -> D(32, 2 ms). */
+TestResults yourDepTest(ITaskSystem* t) {
+    std::atomic<int> fa(0), fb(0), fc(0), fd(0);
+    std::atomic<bool> violation(false);
+
+    std::vector<std::atomic<int>*> none_f;
+    std::vector<int> none_t;
+    DepCheckTask A(&fa, none_f, none_t, &violation, 1000);
+    DepCheckTask B(&fb, {&fa}, {128}, &violation, 8000);
+    DepCheckTask C(&fc, {&fa}, {128}, &violation, 4000);
+    DepCheckTask D(&fd, {&fb, &fc}, {2, 6}, &violation, 2000);
+
+    double start_time = CycleTimer::currentSeconds();
+    std::vector<TaskID> none;
+    TaskID a = t->runAsyncWithDeps(&A, 128, none);
+    std::vector<TaskID> db = {a};
+    TaskID b = t->runAsyncWithDeps(&B, 2, db);
+    std::vector<TaskID> dc = {a};
+    TaskID c = t->runAsyncWithDeps(&C, 6, dc);
+    std::vector<TaskID> dd = {b, c};
+    t->runAsyncWithDeps(&D, 32, dd);
+    t->sync();
+    double end_time = CycleTimer::currentSeconds();
+
+    TestResults results;
+    results.passed = !violation.load() && fa.load() == 128 && fb.load() == 2
+                        && fc.load() == 6 && fd.load() == 32;
+    results.time = end_time - start_time;
+    return results;
+}
+
+class CountTask : public IRunnable {
+    public:
+        std::atomic<int>* c_;
+        CountTask(std::atomic<int>* c) : c_(c) {}
+        ~CountTask() {}
+        void runTask(int task_id, int num_total_tasks) { c_->fetch_add(1); }
+};
+
+TestResults splitTestBase(ITaskSystem* t, int num_sub) {
+    const int total_tasks = 4096;
+    const int reps = 200;
+    std::atomic<int> counter(0);
+    CountTask task(&counter);
+
+    double start_time = CycleTimer::currentSeconds();
+    for (int r = 0; r < reps; r++) {
+        std::vector<TaskID> none;
+        for (int s = 0; s < num_sub; s++) {
+            t->runAsyncWithDeps(&task, total_tasks / num_sub, none);
+        }
+        t->sync();
+    }
+    double end_time = CycleTimer::currentSeconds();
+
+    TestResults results;
+    results.passed = (counter.load() == total_tasks * reps);
+    results.time = end_time - start_time;
+    return results;
+}
+
+TestResults yourSplitOneTest(ITaskSystem* t)  { return splitTestBase(t, 1); }
+TestResults yourSplitFourTest(ITaskSystem* t) { return splitTestBase(t, 4); }

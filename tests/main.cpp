@@ -49,7 +49,7 @@ ITaskSystem *selectTaskSystemRefImpl(int num_threads, TaskSystemType type) {
 
 int main(int argc, char** argv)
 {
-    const int n_tests = 38;
+    const int n_tests = 41;
     int num_threads = DEFAULT_NUM_THREADS;
     int num_timing_iterations = DEFAULT_NUM_TIMING_ITERATIONS;
 
@@ -92,6 +92,9 @@ int main(int argc, char** argv)
         irregularChunk512,
         irregularChunk1024,
         irregularChunk2048,
+        yourDepTest,
+        yourSplitOneTest,
+        yourSplitFourTest,
     };
 
     std::string test_names[n_tests] = {
@@ -133,6 +136,9 @@ int main(int argc, char** argv)
         "irregular_chunk_512",
         "irregular_chunk_1024",
         "irregular_chunk_2048",
+        "your_dep_test",
+        "your_split_one",
+        "your_split_four",
     };
 
     // Parse commandline options
